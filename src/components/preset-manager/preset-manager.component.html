@@ -1,0 +1,663 @@
+
+<!-- Modal Backdrop -->
+<div class="fixed inset-0 bg-black flex items-center justify-center z-50 p-4 transition-opacity ease-in-out duration-300"
+     [class.bg-opacity-0]="animationState() !== 'entered'"
+     [class.bg-opacity-75]="animationState() === 'entered'"
+     (mousedown)="onBackdropMousedown($event)"
+     (mouseup)="onBackdropMouseup($event)">
+  <!-- Modal Panel -->
+  <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-4xl transform transition-all ease-in-out duration-300"
+       [class.opacity-0]="animationState() !== 'entered'"
+       [class.scale-95]="animationState() !== 'entered'"
+       [class.translate-y-4]="animationState() !== 'entered'"
+       [class.opacity-100]="animationState() === 'entered'"
+       [class.scale-100]="animationState() === 'entered'"
+       [class.translate-y-0]="animationState() === 'entered'">
+    <div class="px-6 py-4 border-b border-gray-700 flex justify-between items-center">
+      <h3 class="text-xl leading-6 font-medium text-white">Quản lý Cấu hình</h3>
+      <button (click)="close()" class="text-gray-400 hover:text-white transition-colors">&times;</button>
+    </div>
+    
+    <!-- Tabs -->
+    <div class="border-b border-gray-700">
+      <nav class="-mb-px flex space-x-4 px-6 overflow-x-auto" aria-label="Tabs">
+        <button (click)="activeTab.set('presets')" [class]="activeTab() === 'presets' ? 'border-primary text-primary' : 'border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500'" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+          Presets
+        </button>
+        <button (click)="activeTab.set('channels')" [class]="activeTab() === 'channels' ? 'border-primary text-primary' : 'border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500'" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+          Thông tin Kênh
+        </button>
+        <button (click)="activeTab.set('formulas')" [class]="activeTab() === 'formulas' ? 'border-primary text-primary' : 'border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500'" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+          Công thức Tiêu đề
+        </button>
+        <button (click)="activeTab.set('descriptionFormulas')" [class]="activeTab() === 'descriptionFormulas' ? 'border-primary text-primary' : 'border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500'" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+          Công thức Mô tả
+        </button>
+        <button (click)="activeTab.set('import_export')" [class]="activeTab() === 'import_export' ? 'border-primary text-primary' : 'border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500'" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+          Import/Export
+        </button>
+      </nav>
+    </div>
+
+    <div class="p-6 max-h-[70vh] overflow-y-auto">
+      @switch (activeTab()) {
+        @case ('presets') {
+          <!-- Presets Management -->
+          @if (!editingPreset()) {
+            <div class="flex justify-between items-center mb-4">
+              <h4 class="text-lg font-bold text-white">Presets đã lưu</h4>
+              <button (click)="openPresetModal()" [disabled]="titleFormulas().length === 0 || descriptionFormulas().length === 0 || channelInfos().length === 0" class="flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-hover transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed">
+                <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" /></svg>
+                Preset mới
+              </button>
+            </div>
+             @if (titleFormulas().length === 0 || descriptionFormulas().length === 0 || channelInfos().length === 0) {
+              <p class="text-sm text-yellow-400 bg-yellow-900/50 p-3 rounded-md">Vui lòng tạo ít nhất một 'Thông tin Kênh', 'Công thức Tiêu đề' và 'Công thức Mô tả' trước khi tạo Preset.</p>
+            }
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-700">
+                <thead class="bg-gray-700/50">
+                  <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase">Tên Preset</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase">Hành động</th>
+                  </tr>
+                </thead>
+                <tbody class="bg-gray-800 divide-y divide-gray-700">
+                  @for (preset of presets(); track preset.id) {
+                    <tr>
+                      <td class="px-6 py-4 text-sm font-medium text-white">{{ preset.name }}</td>
+                      <td class="px-6 py-4 text-sm font-medium">
+                         @if (deletingId() === preset.id) {
+                           <div class="flex items-center space-x-2 animate-fade-in">
+                             <span class="text-red-400 text-xs font-bold mr-1">Xóa?</span>
+                             <button (click)="confirmDeletePreset($event)" class="bg-red-600 text-white text-xs px-2 py-1 rounded hover:bg-red-700 transition-colors">Có</button>
+                             <button (click)="cancelDelete($event)" class="bg-gray-600 text-gray-200 text-xs px-2 py-1 rounded hover:bg-gray-500 transition-colors">Hủy</button>
+                           </div>
+                         } @else {
+                          <div class="flex items-center space-x-4">
+                            <button type="button" (click)="openPresetModal(preset)" class="text-indigo-400 hover:text-indigo-300 transition-colors"><app-pencil-icon></app-pencil-icon></button>
+                            <button type="button" (click)="initiateDeletePreset($event, preset.id)" class="text-red-500 hover:text-red-400 transition-colors"><app-trash-icon></app-trash-icon></button>
+                          </div>
+                         }
+                      </td>
+                    </tr>
+                  }
+                   @if (presets().length === 0) {
+                    <tr>
+                      <td colspan="2" class="px-6 py-4 text-sm text-center text-gray-500">Chưa có preset nào.</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          } @else {
+            <!-- Preset Form -->
+            <form (ngSubmit)="savePreset()">
+              <h4 class="text-lg font-bold text-white mb-4">{{ presetForm().id ? 'Chỉnh sửa Preset' : 'Tạo Preset mới' }}</h4>
+              <div class="space-y-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-300">Tên Preset</label>
+                  <input type="text" [(ngModel)]="presetForm().name" name="name" required class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md py-2 px-3 text-white transition-colors focus:ring-primary focus:border-primary">
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-300">Thông tin Kênh</label>
+                  <select [(ngModel)]="presetForm().channelInfoId" name="channelInfoId" required class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md py-2 px-3 text-white transition-colors focus:ring-primary focus:border-primary">
+                    @for (info of channelInfos(); track info.id) { <option [value]="info.id">{{ info.profileName }}</option> }
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-300">Công thức Tiêu đề</label>
+                  <select [(ngModel)]="presetForm().titleFormulaId" name="titleFormulaId" required class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md py-2 px-3 text-white transition-colors focus:ring-primary focus:border-primary">
+                    @for (formula of titleFormulas(); track formula.id) { <option [value]="formula.id">{{ formula.name }}</option> }
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-300">Công thức Mô tả</label>
+                  <select [(ngModel)]="presetForm().descriptionFormulaId" name="descriptionFormulaId" required class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md py-2 px-3 text-white transition-colors focus:ring-primary focus:border-primary">
+                    @for (formula of descriptionFormulas(); track formula.id) { <option [value]="formula.id">{{ formula.name }}</option> }
+                  </select>
+                </div>
+              </div>
+              <div class="mt-6 flex justify-end space-x-3">
+                <button type="button" (click)="editingPreset.set(null)" class="px-4 py-2 bg-gray-600 rounded-md hover:bg-gray-500 transition-colors">Hủy</button>
+                <button type="submit" class="px-4 py-2 bg-primary rounded-md hover:bg-primary-hover transition-colors">Lưu Preset</button>
+              </div>
+            </form>
+          }
+        }
+        @case('channels') {
+          <!-- Channel Info Management -->
+          @if (!editingChannelInfo()) {
+            <div class="flex justify-between items-center mb-4">
+              <h4 class="text-lg font-bold text-white">Hồ sơ Thông tin Kênh</h4>
+              <button (click)="openChannelInfoModal()" class="flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-hover transition-colors">
+                <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" /></svg>
+                Hồ sơ mới
+              </button>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-700">
+                <thead class="bg-gray-700/50">
+                  <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase">Tên Hồ sơ</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase">Tên Kênh</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase">Hành động</th>
+                  </tr>
+                </thead>
+                <tbody class="bg-gray-800 divide-y divide-gray-700">
+                  @for (info of channelInfos(); track info.id) {
+                    <tr>
+                      <td class="px-6 py-4 text-sm font-medium text-white">{{ info.profileName }}</td>
+                      <td class="px-6 py-4 text-sm text-gray-400">{{ info.channelName }}</td>
+                      <td class="px-6 py-4 text-sm font-medium">
+                        @if (deletingId() === info.id) {
+                           <div class="flex items-center space-x-2 animate-fade-in">
+                             <span class="text-red-400 text-xs font-bold mr-1">Xóa?</span>
+                             <button (click)="confirmDeleteChannelInfo($event)" class="bg-red-600 text-white text-xs px-2 py-1 rounded hover:bg-red-700 transition-colors">Có</button>
+                             <button (click)="cancelDelete($event)" class="bg-gray-600 text-gray-200 text-xs px-2 py-1 rounded hover:bg-gray-500 transition-colors">Hủy</button>
+                           </div>
+                         } @else {
+                          <div class="flex items-center space-x-4">
+                            <button type="button" (click)="openChannelInfoModal(info)" class="text-indigo-400 hover:text-indigo-300 transition-colors"><app-pencil-icon></app-pencil-icon></button>
+                            <button type="button" (click)="initiateDeleteChannelInfo($event, info.id)" class="text-red-500 hover:text-red-400 transition-colors"><app-trash-icon></app-trash-icon></button>
+                          </div>
+                        }
+                      </td>
+                    </tr>
+                  }
+                  @if (channelInfos().length === 0) {
+                    <tr>
+                      <td colspan="3" class="px-6 py-4 text-sm text-center text-gray-500">Chưa có hồ sơ thông tin kênh nào.</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          } @else {
+            <!-- Channel Info Form -->
+            <form (ngSubmit)="saveChannelInfo()">
+              <h4 class="text-lg font-bold text-white mb-4">{{ channelInfoForm().id ? 'Chỉnh sửa Hồ sơ' : 'Tạo Hồ sơ Kênh mới' }}</h4>
+              <div class="space-y-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-300">Tên Hồ sơ (bắt buộc)</label>
+                  <input type="text" [(ngModel)]="channelInfoForm().profileName" name="profileName" required class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md py-2 px-3 text-white focus:ring-primary focus:border-primary" placeholder="Ví dụ: Kênh của tôi">
+                </div>
+                 <div>
+                  <label class="block text-sm font-medium text-gray-300">Tên Kênh (bắt buộc)</label>
+                  <input type="text" [(ngModel)]="channelInfoForm().channelName" name="channelName" required class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md py-2 px-3 text-white focus:ring-primary focus:border-primary" placeholder="Tên kênh YouTube chính thức">
+                </div>
+                 <div>
+                  <label class="block text-sm font-medium text-gray-300">Link Kênh (bắt buộc)</label>
+                  <input type="url" [(ngModel)]="channelInfoForm().channelLink" name="channelLink" required class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md py-2 px-3 text-white focus:ring-primary focus:border-primary" placeholder="https://youtube.com/channel/...">
+                </div>
+                 <div>
+                  <label class="block text-sm font-medium text-gray-300">Link Spotify (tùy chọn)</label>
+                  <input type="url" [(ngModel)]="channelInfoForm().spotifyLink" name="spotifyLink" class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md py-2 px-3 text-white focus:ring-primary focus:border-primary" >
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-300">Email liên hệ (tùy chọn)</label>
+                  <input type="email" [(ngModel)]="channelInfoForm().contactEmail" name="contactEmail" class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md py-2 px-3 text-white focus:ring-primary focus:border-primary" >
+                </div>
+                 <div>
+                  <label class="block text-sm font-medium text-gray-300">Mô tả ngắn của kênh (tùy chọn)</label>
+                  <textarea [(ngModel)]="channelInfoForm().shortDescription" name="shortDescription" rows="3" class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md py-2 px-3 text-white focus:ring-primary focus:border-primary" placeholder="Một hoặc hai câu giới thiệu về kênh của bạn..."></textarea>
+                  <p class="mt-1 text-xs text-gray-500">AI sẽ sử dụng mô tả này để tạo phần giới thiệu kênh trong mô tả video.</p>
+                </div>
+                
+                <div>
+                  <label for="channel-tags" class="block text-sm font-medium text-gray-300">Thẻ Kênh (ngăn cách bởi dấu phẩy, tùy chọn)</label>
+                  <textarea 
+                    id="channel-tags"
+                    [(ngModel)]="channelInfoForm().channelTags" 
+                    name="channelTags" 
+                    rows="3" 
+                    class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md py-2 px-3 text-white focus:ring-primary focus:border-primary" 
+                    placeholder="lofi, chillhop, music for studying, beats to relax to..."></textarea>
+                  <p class="mt-1 text-xs text-gray-500">Đây là những thẻ mặc định đại diện cho toàn bộ kênh của bạn. AI sẽ sử dụng chúng để tăng cường SEO cho các thẻ video được tạo ra.</p>
+                </div>
+
+                <!-- Playlists -->
+                <div>
+                    <h5 class="text-md font-medium text-gray-300 mb-2">Playlists (tối đa 5)</h5>
+                    <div class="space-y-3">
+                        @for(playlist of channelInfoForm().playlists; track trackByIndex($index, playlist); let i = $index) {
+                            <div class="grid grid-cols-12 gap-2 items-center">
+                                <div class="col-span-5">
+                                    <input type="text" [(ngModel)]="playlist.name" [name]="'playlistName' + i" class="w-full bg-gray-900/50 border-gray-600 rounded-md py-1.5 px-2 text-white text-sm focus:ring-primary focus:border-primary" placeholder="Tên Playlist {{i + 1}}">
+                                </div>
+                                <div class="col-span-6">
+                                    <input type="url" [(ngModel)]="playlist.link" [name]="'playlistLink' + i" class="w-full bg-gray-900/50 border-gray-600 rounded-md py-1.5 px-2 text-white text-sm focus:ring-primary focus:border-primary" placeholder="Link Playlist {{i + 1}}">
+                                </div>
+                                <div class="col-span-1">
+                                    <button type="button" (click)="removePlaylist(i)" class="text-red-500 hover:text-red-400 p-1 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors">
+                                        <app-trash-icon></app-trash-icon>
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                    @if(!channelInfoForm().playlists || channelInfoForm().playlists!.length < 5) {
+                        <button type="button" (click)="addPlaylist()" class="mt-3 text-sm text-primary hover:text-primary-hover font-medium">+ Thêm Playlist</button>
+                    }
+                </div>
+              </div>
+              <div class="mt-6 flex justify-end space-x-3">
+                <button type="button" (click)="editingChannelInfo.set(null)" class="px-4 py-2 bg-gray-600 rounded-md hover:bg-gray-500 transition-colors">Hủy</button>
+                <button type="submit" class="px-4 py-2 bg-primary rounded-md hover:bg-primary-hover transition-colors">Lưu Hồ sơ</button>
+              </div>
+            </form>
+          }
+        }
+        @case ('formulas') {
+           <!-- Title Formulas Management -->
+          @if (!editingFormula()) {
+            <div class="flex justify-between items-center mb-4">
+              <h4 class="text-lg font-bold text-white">Công thức Tiêu đề đã lưu</h4>
+              <button (click)="openFormulaModal()" class="flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-hover transition-colors">
+                 <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" /></svg>
+                 Công thức mới
+              </button>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-700">
+                <thead class="bg-gray-700/50">
+                  <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase">Tên</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase">Prompt cho AI</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase">Hành động</th>
+                  </tr>
+                </thead>
+                <tbody class="bg-gray-800 divide-y divide-gray-700">
+                  @for (formula of titleFormulas(); track formula.id) {
+                    <tr>
+                      <td class="px-6 py-4 text-sm font-medium text-white">{{ formula.name }}</td>
+                      <td class="px-6 py-4 text-sm text-gray-400 truncate max-w-sm">{{ formula.instruction }}</td>
+                      <td class="px-6 py-4 text-sm font-medium">
+                        @if (deletingId() === formula.id) {
+                           <div class="flex items-center space-x-2 animate-fade-in">
+                             <span class="text-red-400 text-xs font-bold mr-1">Xóa?</span>
+                             <button (click)="confirmDeleteFormula($event)" class="bg-red-600 text-white text-xs px-2 py-1 rounded hover:bg-red-700 transition-colors">Có</button>
+                             <button (click)="cancelDelete($event)" class="bg-gray-600 text-gray-200 text-xs px-2 py-1 rounded hover:bg-gray-500 transition-colors">Hủy</button>
+                           </div>
+                         } @else {
+                          <div class="flex items-center space-x-4">
+                            <button type="button" (click)="openFormulaModal(formula)" class="text-indigo-400 hover:text-indigo-300 transition-colors"><app-pencil-icon></app-pencil-icon></button>
+                            <button type="button" (click)="initiateDeleteFormula($event, formula.id)" class="text-red-500 hover:text-red-400 transition-colors"><app-trash-icon></app-trash-icon></button>
+                          </div>
+                        }
+                      </td>
+                    </tr>
+                  }
+                   @if (titleFormulas().length === 0) {
+                    <tr>
+                      <td colspan="3" class="px-6 py-4 text-sm text-center text-gray-500">Chưa có công thức nào.</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          } @else {
+            <!-- New Title Formula Form -->
+            <form (ngSubmit)="saveFormula()">
+              <h4 class="text-lg font-bold text-white mb-4">{{ formulaForm().id ? 'Chỉnh sửa Công thức' : 'Tạo Công thức mới' }}</h4>
+              <div class="grid grid-cols-1 md:grid-cols-2 md:gap-x-8">
+                <!-- Left Column: Input -->
+                <div class="space-y-6">
+                  <!-- Step 1: Provide sample titles -->
+                  <div>
+                    <h5 class="text-md font-semibold text-gray-200 mb-2">Bước 1: Cung cấp tiêu đề mẫu</h5>
+                    <p class="text-sm text-gray-400 mb-2">Tải lên tệp tiêu đề mẫu (.txt):</p>
+                    <div 
+                      (dragover)="onDragOver($event)" 
+                      (dragleave)="onDragLeave($event)" 
+                      (drop)="onDrop($event)"
+                      [class]="isDraggingOver() ? 'border-primary bg-gray-700/50' : 'border-gray-600'"
+                      class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-md transition-colors">
+                      <div class="space-y-1 text-center">
+                        <svg class="mx-auto h-12 w-12 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m.75 12l3 3m0 0l3-3m-3 3v-6m-1.5-9H5.625a1.875 1.875 0 00-1.875 1.875v17.25a1.875 1.875 0 001.875 1.875h12.75a1.875 1.875 0 001.875-1.875V10.5M8.25 9.75h.75a2.25 2.25 0 012.25 2.25v.75" />
+                        </svg>
+                        <div class="flex text-sm text-gray-400 justify-center">
+                          <label for="title-files" class="relative cursor-pointer bg-gray-700 rounded-md font-medium text-primary hover:text-primary-hover focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-offset-gray-800 focus-within:ring-primary px-2 py-1 transition-colors">
+                            <span>Chọn tệp</span>
+                            <input type="file" id="title-files" (change)="handleTitleFilesSelection($event)" class="sr-only" multiple accept=".txt,text/plain">
+                          </label>
+                          <p class="pl-1">hoặc kéo và thả</p>
+                        </div>
+                        <p class="text-xs text-gray-500">Chỉ nhận tệp .txt</p>
+                      </div>
+                    </div>
+                    @if (titleAnalysisFiles().length > 0) {
+                      <div class="mt-3 space-y-2">
+                        <p class="text-sm font-medium text-gray-300">Tệp đã chọn:</p>
+                        @for (file of titleAnalysisFiles(); track file.name) {
+                          <div class="flex justify-between items-center bg-gray-700/80 px-3 py-1.5 rounded-md text-sm">
+                            <span class="text-gray-300 truncate">{{ file.name }}</span>
+                            <button type="button" (click)="removeFile(file)" class="text-gray-500 hover:text-red-400 font-bold text-lg leading-none">&times;</button>
+                          </div>
+                        }
+                      </div>
+                    }
+                    
+                    <div class="relative my-4">
+                      <div class="absolute inset-0 flex items-center" aria-hidden="true">
+                        <div class="w-full border-t border-gray-600"></div>
+                      </div>
+                      <div class="relative flex justify-center">
+                        <span class="bg-gray-800 px-2 text-sm text-gray-400">HOẶC</span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label for="raw-titles-input" class="block text-sm text-gray-400 mb-2">Dán danh sách tiêu đề (mỗi tiêu đề một dòng):</label>
+                      <textarea 
+                        id="raw-titles-input"
+                        [ngModel]="rawTitlesInput()" 
+                        (ngModelChange)="rawTitlesInput.set($event)"
+                        name="rawTitles" 
+                        rows="8" 
+                        class="block w-full bg-gray-900/50 border-gray-600 rounded-md py-2 px-3 text-white transition-colors focus:ring-primary focus:border-primary" 
+                        placeholder="Tiêu đề video 1&#10;Tiêu đề video 2&#10;Tiêu đề video 3..."></textarea>
+                    </div>
+
+                  </div>
+
+                  <!-- Step 2: Analyze -->
+                  <div>
+                    <h5 class="text-md font-semibold text-gray-200 mb-2">Bước 2: Phân tích bằng AI</h5>
+                    <button type="button" (click)="analyzeTitles()" [disabled]="isAnalysisDisabled()"
+                      class="w-full flex justify-center items-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors">
+                      @if (isAnalyzingTitles()) {
+                        <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Đang phân tích...
+                      } @else {
+                        <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M10 3.5a1.5 1.5 0 013 0V4a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-.5a1.5 1.5 0 000 3h.5a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 00-1 1v.5a1.5 1.5 0 01-3 0v-.5a1 1 0 00-1-1H7a1 1 0 01-1-1v-3a1 1 0 011-1h.5a1.5 1.5 0 000-3H7a1 1 0 01-1-1V8a1 1 0 011-1h3a1 1 0 001-1v-.5z" /></svg>
+                        Phân tích Dữ liệu
+                      }
+                    </button>
+                    <p class="mt-2 text-xs text-gray-400">AI sẽ đọc các tệp hoặc văn bản bạn cung cấp và tự động tạo tên và prompt hướng dẫn.</p>
+                  </div>
+                </div>
+                <!-- Right Column: Output -->
+                <div class="space-y-4 mt-6 md:mt-0">
+                  <h5 class="text-md font-semibold text-gray-200 mb-2">Bước 3: Kiểm tra và Lưu</h5>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-300">Tên Công thức (do AI tạo)</label>
+                    <input type="text" [(ngModel)]="formulaForm().name" name="name" required class="mt-1 block w-full bg-gray-900/50 border-gray-600 rounded-md py-2 px-3 text-white focus:ring-primary focus:border-primary transition" placeholder="Tên sẽ xuất hiện ở đây sau khi phân tích...">
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-300">Prompt cho AI (do AI tạo)</label>
+                    <textarea [(ngModel)]="formulaForm().instruction" name="instruction" rows="18" required class="mt-1 block w-full bg-gray-900/50 border-gray-600 rounded-md py-2 px-3 text-white font-mono text-xs focus:ring-primary focus:border-primary transition" placeholder="Prompt hướng dẫn sẽ xuất hiện ở đây sau khi phân tích..."></textarea>
+                  </div>
+                </div>
+              </div>
+              <div class="mt-6 flex justify-end space-x-3">
+                <button type="button" (click)="editingFormula.set(null)" class="px-4 py-2 bg-gray-600 rounded-md hover:bg-gray-500 transition-colors">Hủy</button>
+                <button type="submit" class="px-4 py-2 bg-primary rounded-md hover:bg-primary-hover transition-colors">Lưu Công thức</button>
+              </div>
+            </form>
+          }
+        }
+        @case ('descriptionFormulas') {
+           <!-- Description Formulas Management -->
+          @if (!editingDescriptionFormula()) {
+            <div class="flex justify-between items-center mb-4">
+              <h4 class="text-lg font-bold text-white">Công thức Mô tả đã lưu</h4>
+               <button (click)="openDescriptionFormulaModal()" class="flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-hover transition-colors">
+                 <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" /></svg>
+                 Công thức mới
+              </button>
+            </div>
+             <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-700">
+                <thead class="bg-gray-700/50">
+                  <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase">Tên</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase">Hành động</th>
+                  </tr>
+                </thead>
+                <tbody class="bg-gray-800 divide-y divide-gray-700">
+                  @for (formula of descriptionFormulas(); track formula.id) {
+                    <tr>
+                      <td class="px-6 py-4 text-sm font-medium text-white">{{ formula.name }}</td>
+                       <td class="px-6 py-4 text-sm font-medium">
+                        @if (deletingId() === formula.id) {
+                           <div class="flex items-center space-x-2 animate-fade-in">
+                             <span class="text-red-400 text-xs font-bold mr-1">Xóa?</span>
+                             <button (click)="confirmDeleteDescriptionFormula($event)" class="bg-red-600 text-white text-xs px-2 py-1 rounded hover:bg-red-700 transition-colors">Có</button>
+                             <button (click)="cancelDelete($event)" class="bg-gray-600 text-gray-200 text-xs px-2 py-1 rounded hover:bg-gray-500 transition-colors">Hủy</button>
+                           </div>
+                         } @else {
+                          <div class="flex items-center space-x-4">
+                            <button type="button" (click)="openDescriptionFormulaModal(formula)" class="text-indigo-400 hover:text-indigo-300 transition-colors"><app-pencil-icon></app-pencil-icon></button>
+                            <button type="button" (click)="initiateDeleteDescriptionFormula($event, formula.id)" class="text-red-500 hover:text-red-400 transition-colors"><app-trash-icon></app-trash-icon></button>
+                          </div>
+                        }
+                      </td>
+                    </tr>
+                  }
+                   @if (descriptionFormulas().length === 0) {
+                    <tr>
+                      <td colspan="2" class="px-6 py-4 text-sm text-center text-gray-500">Chưa có công thức nào.</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          } @else {
+             <!-- Description Formula Form -->
+            <form (ngSubmit)="saveDescriptionFormula()">
+              <h4 class="text-lg font-bold text-white mb-4">{{ descriptionFormulaForm().id ? 'Chỉnh sửa Công thức' : 'Tạo Công thức mới' }}</h4>
+              <div class="grid grid-cols-1 md:grid-cols-2 md:gap-x-8">
+                <!-- Left Column: Input -->
+                <div class="flex flex-col">
+                  <h5 class="text-md font-semibold text-gray-200 mb-2">Bước 1: Dán mô tả mẫu để phân tích</h5>
+                  <textarea 
+                    [ngModel]="rawDescriptionInput()" 
+                    (ngModelChange)="rawDescriptionInput.set($event)"
+                    name="rawDescription" 
+                    rows="12" 
+                    class="mt-1 block w-full bg-gray-900/50 border-gray-600 rounded-md py-2 px-3 text-white font-mono transition-colors focus:ring-primary focus:border-primary flex-grow" 
+                    placeholder="Dán toàn bộ nội dung mô tả của một video vào đây..."></textarea>
+                  
+                  <button 
+                    type="button" 
+                    (click)="analyzeDescription()" 
+                    [disabled]="!rawDescriptionInput() || isAnalyzingDescription()"
+                    class="mt-3 w-full flex justify-center items-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors">
+                    @if (isAnalyzingDescription()) {
+                      <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Đang phân tích...
+                    } @else {
+                      <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M10 3.5a1.5 1.5 0 013 0V4a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-.5a1.5 1.5 0 000 3h.5a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 00-1 1v.5a1.5 1.5 0 01-3 0v-.5a1 1 0 00-1-1H7a1 1 0 01-1-1v-3a1 1 0 011-1h.5a1.5 1.5 0 000-3H7a1 1 0 01-1-1V8a1 1 0 011-1h3a1 1 0 001-1v-.5z" /></svg>
+                      Phân tích bằng AI
+                    }
+                  </button>
+                  <p class="mt-2 text-xs text-gray-400">AI sẽ đọc mô tả và tự động tạo tên và cấu trúc công thức.</p>
+                </div>
+
+                <!-- Right Column: Output -->
+                <div class="space-y-4 mt-6 md:mt-0">
+                  <h5 class="text-md font-semibold text-gray-200 mb-2">Bước 2: Kiểm tra và Lưu</h5>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-300">Tên Công thức (do AI tạo)</label>
+                    <input type="text" [(ngModel)]="descriptionFormulaForm().name" name="name" required class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md py-2 px-3 text-white transition-colors focus:ring-primary focus:border-primary" placeholder="Tên sẽ xuất hiện ở đây sau khi phân tích...">
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-300">Cấu trúc Mô tả (do AI tạo)</label>
+                    <textarea [(ngModel)]="descriptionFormulaForm().template" name="template" rows="10" required class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md py-2 px-3 text-white font-mono transition-colors focus:ring-primary focus:border-primary" placeholder="Cấu trúc công thức sẽ xuất hiện ở đây sau khi phân tích..."></textarea>
+                  </div>
+                   <div>
+                    <label class="block text-sm font-medium text-gray-300">Mô tả mẫu (để AI tham khảo định dạng)</label>
+                    <textarea [(ngModel)]="descriptionFormulaForm().example" name="example" rows="10" class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md py-2 px-3 text-white font-mono transition-colors focus:ring-primary focus:border-primary" placeholder="Mô tả mẫu gốc được lưu ở đây sau khi phân tích..."></textarea>
+                  </div>
+                </div>
+              </div>
+              <div class="mt-6 flex justify-end space-x-3">
+                <button type="button" (click)="editingDescriptionFormula.set(null)" class="px-4 py-2 bg-gray-600 rounded-md hover:bg-gray-500 transition-colors">Hủy</button>
+                <button type="submit" class="px-4 py-2 bg-primary rounded-md hover:bg-primary-hover transition-colors">Lưu Công thức</button>
+              </div>
+            </form>
+          }
+        }
+        @case('import_export') {
+          <div class="space-y-8">
+            <!-- Export Section -->
+            <div class="bg-gray-700/50 p-6 rounded-lg border border-gray-600">
+              <h4 class="text-lg font-bold text-white mb-2">Sao lưu (Export)</h4>
+              <p class="text-sm text-gray-400 mb-4">Lưu tất cả các Presets, Thông tin Kênh, và Công thức của bạn vào một tệp JSON duy nhất.</p>
+              
+              <!-- Backup Status -->
+              <div class="p-4 rounded-md mb-4 text-sm" 
+                   [class]="hasUnsavedChanges() ? 'bg-yellow-900/50 border border-yellow-600' : 'bg-green-900/50 border border-green-600'">
+                @if (lastBackupDate()) {
+                  <p class="font-semibold" [class]="hasUnsavedChanges() ? 'text-yellow-300' : 'text-green-300'">
+                    Lần sao lưu cuối: {{ lastBackupDate()?.toLocaleString('vi-VN') }}
+                  </p>
+                  @if (hasUnsavedChanges()) {
+                    <p class="text-yellow-400 mt-1">Có thay đổi chưa được sao lưu.</p>
+                  } @else {
+                    <p class="text-green-400 mt-1">Đã an toàn.</p>
+                  }
+                } @else {
+                  <p class="font-semibold text-yellow-300">Chưa có bản sao lưu nào.</p>
+                }
+              </div>
+
+              <button (click)="exportAllData()" class="flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-hover transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Tải xuống Bản sao lưu (.json)
+              </button>
+            </div>
+
+            <!-- Import Section -->
+            <div class="bg-gray-900/30 p-6 rounded-lg border border-dashed border-gray-500">
+              <h4 class="text-lg font-bold text-white mb-2">Nhập dữ liệu (Import)</h4>
+              
+              <!-- Step 1: File Selection -->
+              @if (!importFile()) {
+                <p class="text-sm text-gray-400 mb-6">Chọn một tệp .json sao lưu để bắt đầu. Bạn có thể chọn lọc các mục muốn nhập trong bước tiếp theo.</p>
+                
+                <div class="flex justify-center items-center w-full">
+                   <label for="import-json-file" class="flex flex-col justify-center items-center w-full h-32 bg-gray-700 rounded-lg border-2 border-gray-600 border-dashed cursor-pointer hover:bg-gray-600 transition-colors">
+                        <div class="flex flex-col justify-center items-center pt-5 pb-6">
+                            <svg class="mb-3 w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                            <p class="mb-2 text-sm text-gray-400"><span class="font-semibold">Nhấn để chọn tệp</span> hoặc kéo thả vào đây</p>
+                            <p class="text-xs text-gray-500">Tệp JSON sao lưu</p>
+                        </div>
+                        <input id="import-json-file" type="file" class="hidden" accept=".json,application/json" (change)="onFileSelectedForImport($event)">
+                    </label>
+                </div>
+
+                @if(importError()) {
+                  <div class="mt-4 p-3 bg-red-900/50 border border-red-500 text-red-200 rounded text-sm">
+                    <strong>Lỗi:</strong> {{ importError() }}
+                  </div>
+                }
+              } 
+              <!-- Step 2: Preview & Selection -->
+              @else {
+                <div class="bg-gray-800 border border-gray-600 rounded-lg p-4">
+                  <div class="flex justify-between items-start mb-4 pb-4 border-b border-gray-700">
+                    <div>
+                      <h5 class="text-white font-medium text-lg">Xem trước Import: <span class="text-primary">{{ importFile()?.name }}</span></h5>
+                      <p class="text-sm text-gray-400">Loại bỏ các mục bạn KHÔNG muốn nhập bằng cách nhấn nút xóa.</p>
+                    </div>
+                    <button (click)="cancelImport()" class="text-gray-400 hover:text-white text-sm underline">Hủy bỏ & Chọn lại</button>
+                  </div>
+
+                  @if (importPreviewData(); as data) {
+                    <div class="space-y-4 max-h-[50vh] overflow-y-auto pr-2">
+                       
+                       <!-- Presets Preview -->
+                       @if (data.presets.length > 0) {
+                         <div class="bg-gray-700/30 rounded-md p-3">
+                           <h6 class="text-sm font-bold text-indigo-300 mb-2 flex justify-between">
+                             <span>Presets ({{data.presets.length}})</span>
+                           </h6>
+                           <ul class="space-y-1">
+                             @for(item of data.presets; track trackByIndex($index, item); let i = $index) {
+                               <li class="flex justify-between items-center text-sm bg-gray-800 px-3 py-2 rounded border border-gray-700">
+                                 <span class="text-gray-300">{{item.name}}</span>
+                                 <button (click)="removeImportItem('presets', i)" class="text-gray-500 hover:text-red-400 px-2 hover:bg-gray-700 rounded">&times;</button>
+                               </li>
+                             }
+                           </ul>
+                         </div>
+                       }
+
+                       <!-- Channels Preview -->
+                       @if (data.channelInfos.length > 0) {
+                         <div class="bg-gray-700/30 rounded-md p-3">
+                           <h6 class="text-sm font-bold text-green-300 mb-2">Thông tin Kênh ({{data.channelInfos.length}})</h6>
+                           <ul class="space-y-1">
+                             @for(item of data.channelInfos; track trackByIndex($index, item); let i = $index) {
+                               <li class="flex justify-between items-center text-sm bg-gray-800 px-3 py-2 rounded border border-gray-700">
+                                 <span class="text-gray-300">{{item.profileName}} ({{item.channelName}})</span>
+                                 <button (click)="removeImportItem('channelInfos', i)" class="text-gray-500 hover:text-red-400 px-2 hover:bg-gray-700 rounded">&times;</button>
+                               </li>
+                             }
+                           </ul>
+                         </div>
+                       }
+
+                       <!-- Title Formulas Preview -->
+                       @if (data.titleFormulas.length > 0) {
+                         <div class="bg-gray-700/30 rounded-md p-3">
+                           <h6 class="text-sm font-bold text-blue-300 mb-2">Công thức Tiêu đề ({{data.titleFormulas.length}})</h6>
+                           <ul class="space-y-1">
+                             @for(item of data.titleFormulas; track trackByIndex($index, item); let i = $index) {
+                               <li class="flex justify-between items-center text-sm bg-gray-800 px-3 py-2 rounded border border-gray-700">
+                                 <span class="text-gray-300">{{item.name}}</span>
+                                 <button (click)="removeImportItem('titleFormulas', i)" class="text-gray-500 hover:text-red-400 px-2 hover:bg-gray-700 rounded">&times;</button>
+                               </li>
+                             }
+                           </ul>
+                         </div>
+                       }
+
+                       <!-- Desc Formulas Preview -->
+                       @if (data.descriptionFormulas.length > 0) {
+                         <div class="bg-gray-700/30 rounded-md p-3">
+                           <h6 class="text-sm font-bold text-purple-300 mb-2">Công thức Mô tả ({{data.descriptionFormulas.length}})</h6>
+                           <ul class="space-y-1">
+                             @for(item of data.descriptionFormulas; track trackByIndex($index, item); let i = $index) {
+                               <li class="flex justify-between items-center text-sm bg-gray-800 px-3 py-2 rounded border border-gray-700">
+                                 <span class="text-gray-300">{{item.name}}</span>
+                                 <button (click)="removeImportItem('descriptionFormulas', i)" class="text-gray-500 hover:text-red-400 px-2 hover:bg-gray-700 rounded">&times;</button>
+                               </li>
+                             }
+                           </ul>
+                         </div>
+                       }
+                       
+                       @if (importCounts()?.total === 0) {
+                         <p class="text-center text-gray-500 italic py-4">Không còn mục nào để nhập.</p>
+                       }
+                    </div>
+
+                    <div class="mt-6 pt-4 border-t border-gray-700 flex justify-end space-x-3">
+                      <button (click)="cancelImport()" class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-500 transition-colors">Hủy</button>
+                      <button (click)="executeImport()" [disabled]="importCounts()?.total === 0" class="flex items-center justify-center px-6 py-2 bg-green-600 hover:bg-green-500 text-white rounded-md transition-colors shadow-lg disabled:bg-gray-600 disabled:cursor-not-allowed">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                        <span class="font-bold">Nhập {{importCounts()?.total}} mục đã chọn</span>
+                      </button>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        }
+      }
+    </div>
+  </div>
+</div>

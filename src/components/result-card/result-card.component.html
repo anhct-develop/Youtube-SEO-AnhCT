@@ -1,0 +1,79 @@
+
+<div class="bg-gray-700/50 p-5 rounded-lg border border-gray-600 space-y-4">
+  <div class="flex justify-between items-center border-b border-gray-600 pb-2 mb-2">
+    <h3 class="text-lg font-semibold text-primary">Lựa chọn {{ index() + 1 }}</h3>
+  </div>
+
+  <div class="flex flex-col sm:flex-row gap-6">
+    <!-- Left Column: Thumbnail Reference -->
+    <div class="sm:w-1/3 flex-shrink-0">
+      <label class="block text-sm font-medium text-gray-400 mb-2">Ảnh gốc</label>
+      <div class="rounded-lg overflow-hidden border border-gray-600 bg-black/40">
+        <img [src]="thumbnailUrl()" alt="Reference Thumbnail" class="w-full h-auto object-contain">
+      </div>
+    </div>
+
+    <!-- Right Column: Metadata Results -->
+    <div class="sm:w-2/3 space-y-4">
+      
+      <!-- Title -->
+      <div class="space-y-1">
+        <div class="flex justify-between items-center">
+          <label class="text-sm font-medium text-gray-300">Tiêu đề</label>
+          <button #copyTitleBtn (click)="copyToClipboard(result().title, copyTitleBtn)" class="text-gray-400 hover:text-white transition-colors duration-200 flex items-center text-xs">
+            <app-clipboard-icon></app-clipboard-icon>
+            <span class="ml-1">Sao chép</span>
+          </button>
+        </div>
+        <div class="relative">
+           <p class="bg-gray-800 p-3 rounded-md text-sm text-white transition-opacity duration-200">
+             {{ result().title }}
+           </p>
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div class="space-y-1">
+        <div class="flex justify-between items-center">
+          <label class="text-sm font-medium text-gray-300">Mô tả</label>
+          <button #copyDescBtn (click)="copyToClipboard(result().description, copyDescBtn)" class="text-gray-400 hover:text-white transition-colors duration-200 flex items-center text-xs">
+            <app-clipboard-icon></app-clipboard-icon>
+            <span class="ml-1">Sao chép</span>
+          </button>
+        </div>
+        <p class="bg-gray-800 p-3 rounded-md text-sm whitespace-pre-wrap max-h-48 overflow-y-auto transition-opacity duration-200">{{ result().description }}</p>
+      </div>
+
+      <!-- Tags -->
+      <div class="space-y-1">
+        <div class="flex justify-between items-center">
+          <label class="text-sm font-medium text-gray-300">Thẻ</label>
+          <button #copyTagsBtn (click)="copyToClipboard(result().tags, copyTagsBtn)" class="text-gray-400 hover:text-white transition-colors duration-200 flex items-center text-xs">
+            <app-clipboard-icon></app-clipboard-icon>
+            <span class="ml-1">Sao chép</span>
+          </button>
+        </div>
+        <div class="bg-gray-800 p-3 rounded-md text-sm transition-opacity duration-200">
+          <div class="flex flex-wrap gap-2">
+            @for (tag of result().tags; track tag) {
+              <span class="bg-gray-600 px-2 py-1 rounded-full text-xs text-gray-300">{{ tag }}</span>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Pinned Comment -->
+      <div class="space-y-1">
+        <div class="flex justify-between items-center">
+          <label class="text-sm font-medium text-gray-300">Bình luận đã ghim</label>
+          <button #copyCommentBtn (click)="copyToClipboard(unquotedPinnedComment(), copyCommentBtn)" class="text-gray-400 hover:text-white transition-colors duration-200 flex items-center text-xs">
+            <app-clipboard-icon></app-clipboard-icon>
+            <span class="ml-1">Sao chép</span>
+          </button>
+        </div>
+        <p class="bg-gray-800 p-3 rounded-md text-sm text-gray-300 italic">{{ unquotedPinnedComment() }}</p>
+      </div>
+
+    </div>
+  </div>
+</div>

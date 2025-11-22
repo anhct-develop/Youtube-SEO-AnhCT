@@ -1,0 +1,228 @@
+
+<div class="space-y-8">
+  <div class="grid grid-cols-1 lg:grid-cols-10 gap-8 items-start">
+    <!-- Left Column: Inputs -->
+    <div class="bg-gray-800 p-6 rounded-lg shadow-lg space-y-6 lg:col-span-3">
+      <div class="flex justify-between items-center">
+        <h2 class="text-2xl font-bold text-white">Cấu hình</h2>
+      </div>
+      
+      <!-- Image Upload Grid -->
+      <div>
+        <h3 class="text-xl font-bold text-white mb-3">1. Tải lên ảnh thu nhỏ</h3>
+        <div 
+          class="mt-1 flex flex-col justify-center items-center p-6 border-2 border-gray-600 border-dashed rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-primary transition-colors duration-200 cursor-pointer bg-gray-700/30 hover:bg-gray-700/50"
+          [class.border-primary]="isDraggingOver()"
+          tabindex="0"
+          (dragover)="onDragOver($event)" 
+          (dragleave)="onDragLeave($event)" 
+          (drop)="onDrop($event)"
+          (paste)="onPaste($event)"
+          (click)="$event.currentTarget.focus()">
+          
+          <div class="text-center space-y-2">
+            <svg class="mx-auto h-10 w-10 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+              <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+            <div class="flex text-sm text-gray-400 justify-center">
+              <label for="file-upload" class="relative cursor-pointer rounded-md font-medium text-primary hover:text-primary-hover focus-within:outline-none">
+                <span>Chọn nhiều tệp</span>
+                <input id="file-upload" name="file-upload" type="file" class="sr-only" (change)="onFileSelected($event)" accept="image/png, image/jpeg" multiple>
+              </label>
+              <p class="pl-1 self-center">hoặc kéo thả</p>
+            </div>
+            <p class="text-xs text-gray-500">Ctrl+V để dán ảnh</p>
+          </div>
+        </div>
+
+        <!-- Uploaded Gallery -->
+        @if (uploadedItems().length > 0) {
+          <div class="mt-4 grid grid-cols-1 gap-4 max-h-[600px] overflow-y-auto pr-2">
+            @for (item of uploadedItems(); track item.id) {
+              <div class="relative group bg-black/40 rounded-md overflow-hidden border border-gray-600">
+                <!-- Modified: removed aspect-square, changed object-cover to w-full h-auto -->
+                <img [src]="item.preview" class="w-full h-auto block opacity-80 group-hover:opacity-100 transition-opacity">
+                <button 
+                  (click)="removeItem(item.id, $event)"
+                  class="absolute top-1 right-1 bg-black/60 hover:bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-all transform scale-90 group-hover:scale-100">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+                @if (item.status === 'done') {
+                  <div class="absolute bottom-1 right-1 bg-green-500 text-white text-[10px] px-1 rounded shadow">Xong</div>
+                } @else if (item.status === 'error') {
+                   <div class="absolute bottom-1 right-1 bg-red-500 text-white text-[10px] px-1 rounded shadow">Lỗi</div>
+                }
+              </div>
+            }
+          </div>
+          <p class="text-right text-xs text-gray-400 mt-1">{{ uploadedItems().length }} ảnh đã chọn</p>
+        }
+      </div>
+
+      <!-- Configuration -->
+      <div class="space-y-4">
+        <div class="flex justify-between items-center pt-4 border-t border-gray-700">
+            <h3 class="text-xl font-bold text-white">2. Chọn Cấu hình</h3>
+            <button (click)="showManagementModal.set(true)" class="flex items-center justify-center px-3 py-1.5 border border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-300 bg-gray-700 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-primary transition-colors duration-200">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+                <span class="ml-2">Quản lý</span>
+            </button>
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium text-gray-400 mb-2">Preset (Lưu kết hợp)</label>
+          <select [value]="selectedPresetId()" (change)="onPresetChange($event)" class="w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-default focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary sm:text-sm transition-colors duration-200">
+            <option value="" [selected]="!selectedPresetId()">-- Chọn Preset hoặc tùy chỉnh bên dưới --</option>
+            @for (preset of presets(); track preset.id) {
+              <option [value]="preset.id">{{ preset.name }}</option>
+            }
+            @if (presets().length === 0) {
+               <option value="" disabled>Chưa có preset nào</option>
+            }
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-400 mb-2">Thông tin kênh</label>
+          <select [value]="selectedChannelInfoId()" (change)="onChannelInfoChange($event)" class="w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-default focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary sm:text-sm transition-colors duration-200">
+            @if (channelInfos().length > 0) {
+              <option value="" disabled [selected]="!selectedChannelInfoId()">Chọn một hồ sơ kênh...</option>
+              @for (info of channelInfos(); track info.id) {
+                <option [value]="info.id">{{ info.profileName }} ({{info.channelName}})</option>
+              }
+            } @else {
+               <option value="" disabled selected>Chưa có thông tin kênh nào</option>
+            }
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-400 mb-2">Công thức đặt tiêu đề</label>
+          <select [value]="selectedTitleFormulaId()" (change)="onTitleFormulaChange($event)" class="w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-default focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary sm:text-sm transition-colors duration-200">
+            @if (titleFormulas().length > 0) {
+              <option value="" disabled [selected]="!selectedTitleFormulaId()">Chọn một công thức...</option>
+              @for (formula of titleFormulas(); track formula.id) {
+                <option [value]="formula.id">{{ formula.name }}</option>
+              }
+            } @else {
+              <option value="" disabled selected>Chưa có công thức nào</option>
+            }
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-400 mb-2">Công thức Mô tả</label>
+          <select [value]="selectedDescriptionFormulaId()" (change)="onDescriptionFormulaChange($event)" class="w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-default focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary sm:text-sm transition-colors duration-200">
+             @if (descriptionFormulas().length > 0) {
+              <option value="" disabled [selected]="!selectedDescriptionFormulaId()">Chọn một công thức...</option>
+              @for (formula of descriptionFormulas(); track formula.id) {
+                <option [value]="formula.id">{{ formula.name }}</option>
+              }
+            } @else {
+               <option value="" disabled selected>Chưa có công thức nào</option>
+            }
+          </select>
+        </div>
+
+        <div>
+          <label for="seo-keywords" class="block text-sm font-medium text-gray-400 mb-2">Từ khóa SEO (ngăn cách bởi dấu phẩy)</label>
+          <textarea 
+            id="seo-keywords" 
+            rows="3" 
+            [value]="seoKeywords()"
+            (input)="onKeywordsChange($event)"
+            class="w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm p-2 text-left focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary sm:text-sm transition-colors duration-200"
+            placeholder="ví dụ: đánh giá iphone 15, camera test, thời lượng pin"></textarea>
+        </div>
+
+        <div>
+          <label for="tracklist" class="block text-sm font-medium text-gray-400 mb-2">Tracklist (nếu có)</label>
+          <textarea 
+            id="tracklist" 
+            rows="4" 
+            [value]="tracklist()"
+            (input)="onTracklistChange($event)"
+            class="w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm p-2 text-left focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary sm:text-sm transition-colors duration-200"
+            placeholder="00:00 - Tên bài hát 1&#10;03:30 - Tên bài hát 2"></textarea>
+        </div>
+        
+      </div>
+    </div>
+
+    <!-- Right Column: Results -->
+    <div class="bg-gray-800 p-6 rounded-lg shadow-lg min-h-[300px] lg:col-span-7">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-white">3. Kết quả tạo ra</h2>
+        
+        <div class="flex items-center space-x-4">
+          @if (globalLoading()) {
+             <div class="flex items-center text-primary animate-pulse">
+                <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span class="text-sm font-medium">{{ loadingStatus() }}</span>
+             </div>
+          }
+
+          <button (click)="generateMetadata()" [disabled]="isGenerationDisabled() || globalLoading()" 
+            class="flex justify-center py-2 px-6 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-primary disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors duration-200">
+            Tạo Metadata {{ uploadedItems().length > 0 ? '(' + uploadedItems().length + ')' : '' }}
+          </button>
+        </div>
+      </div>
+      
+      @if (uploadedItems().length === 0) {
+        <div class="text-center text-gray-500 pt-16">
+          <svg class="mx-auto h-12 w-12 text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+          <p>Hãy tải lên ảnh và nhấn tạo Metadata để xem kết quả tại đây.</p>
+        </div>
+      } @else {
+        <div class="space-y-6">
+          @for (item of uploadedItems(); track item.id) {
+            @if (item.status === 'done' || item.results.length > 0) {
+              <!-- Accordion Item -->
+              <div class="bg-gray-700/30 rounded-lg border border-gray-600 overflow-hidden">
+                <!-- Header -->
+                <div 
+                  class="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-700/50 transition-colors select-none"
+                  (click)="toggleItemExpand(item.id)">
+                  <div class="flex items-center space-x-4">
+                     <img [src]="item.preview" class="w-12 h-12 rounded object-cover bg-black/30" alt="thumb">
+                     <div>
+                       <h4 class="text-white font-medium text-sm truncate max-w-[200px] sm:max-w-xs">{{ item.file.name }}</h4>
+                       <span class="text-xs text-green-400">Đã tạo 5 lựa chọn</span>
+                     </div>
+                  </div>
+                  <div class="text-gray-400 transform transition-transform duration-200" [class.rotate-180]="item.isExpanded">
+                    <app-chevron-down-icon></app-chevron-down-icon>
+                  </div>
+                </div>
+
+                <!-- Content (Expandable) -->
+                @if (item.isExpanded) {
+                   <div class="p-4 space-y-8 border-t border-gray-600 bg-gray-800/50">
+                      @for (result of item.results; track $index) {
+                        <app-result-card 
+                          [result]="result" 
+                          [index]="$index"
+                          [thumbnailUrl]="item.preview">
+                        </app-result-card>
+                      }
+                   </div>
+                }
+              </div>
+            }
+          }
+        </div>
+      }
+    </div>
+  </div>
+</div>
+
+@if(showManagementModal()) {
+  <app-preset-manager (closeModal)="showManagementModal.set(false)"></app-preset-manager>
+}
